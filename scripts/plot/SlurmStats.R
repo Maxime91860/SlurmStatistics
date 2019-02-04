@@ -245,13 +245,29 @@ for (i in 1:length(accounts)) {
 }
 
 names(accounts_hours) = c("nb_hours", "team")
+# pesseglione = mbb
+accounts_hours[accounts_hours$team %in% "pessiglione",]$nb_hours =  accounts_hours[accounts_hours$team %in% "pessiglione",]$nb_hours + accounts_hours[accounts_hours$team %in% "mbb",]$nb_hours
+accounts_hours = accounts_hours[!(accounts_hours$team %in% "mbb"),]
+# delete too small consumption
 accounts_hours = accounts_hours[accounts_hours$nb_hours > 1, ]
+
+# delete dsi account
+accounts_hours = accounts_hours[!(accounts_hours$team %in% "dsi"),]
+
+# compute percentage
 accounts_hours$prop  = percent(accounts_hours$nb_hours / sum(accounts_hours$nb_hours))
+
+# without big teams
+accounts_hours_lite = accounts_hours[!(accounts_hours$team %in% "cenir"),]
+accounts_hours_lite = accounts_hours_lite[!(accounts_hours_lite$team %in% "vidailhet"),]
+accounts_hours_lite = accounts_hours_lite[!(accounts_hours_lite$team %in% "san"),]
+accounts_hours_lite$prop  = percent(accounts_hours_lite$nb_hours / sum(accounts_hours_lite$nb_hours))
 
 for (i in 1:nrow(users2018)) {
   users2018$nb_hours[i] = sum(unlist(year2018[year2018$User == users2018$year2018.User[i] , ]$ElapsedMinutes)) / 60
 }
 
+# Build data frame for compute hours per months per teams
 nb_hours_month = matrix(0, length(mois), length(accounts))
 colnames(nb_hours_month) = accounts
 nb_hours_month = data.frame(nb_hours_month)
@@ -264,64 +280,71 @@ for (i in 1:length(mois)){
   }
 }
 
+# pesseglione = mbb
+nb_hours_month$pessiglione =  nb_hours_month$pessiglione + nb_hours_month$mbb
+nb_hours_month$mbb = NULL
 
-plotMonthsHours  = ggplot(nb_hours_month, aes(x = "", fill = Equipes))
-for (j in 1:length(accounts)){
-  plotMonthsHours = plotMonthsHours + geom_bar(aes(x = "", colnames(nb_hours_month[j]), fill = accounts[j]), stat = "identity")
-}
-plotMonthsHours + scale_fill_brewer(palette = "Set1") + scale_x_discrete(limits=nb_hours_month$month) + labs(y = "Heures de calcul", x = "2018") + theme_bw()  
+# doesn't work
+# plotMonthsHours  = ggplot(nb_hours_month, aes(x = "", fill = Equipes))
+# for (j in 1:length(accounts)){
+#   plotMonthsHours = plotMonthsHours + geom_bar(aes(x = "", colnames(nb_hours_month[j]), fill = accounts[j]), stat = "identity")
+# }
+# plotMonthsHours + scale_fill_brewer(palette = "Set1") + scale_x_discrete(limits=nb_hours_month$month) + labs(y = "Heures de calcul", x = "2018") + theme_bw()  
 
-
+# without dsi
 ggplot(nb_hours_month, aes(x = "", fill = Equipes))+
-  geom_bar(aes(1:10, dsi, fill = "dsi"), stat = "identity")+
-  geom_bar(aes(1:10, cenir, fill = "cenir"), stat = "identity")+
-  geom_bar(aes(1:10, vidailhet, fill = "vidailhet"), stat = "identity")+
-  geom_bar(aes(1:10, brice, fill = "brice"), stat = "identity")+
-  geom_bar(aes(1:10, bioinfo, fill = "iconics"), stat = "identity")+
-  geom_bar(aes(1:10, bassem, fill = "bassem"), stat = "identity")+
-  geom_bar(aes(1:10, aramis, fill = "aramis"), stat = "identity")+
-  geom_bar(aes(1:10, cohen.naccache, fill = "cohen naccache bartolemeo"), stat = "identity")+
-  geom_bar(aes(1:10, san, fill = "san"), stat = "identity")+
-  geom_bar(aes(1:10, pessiglione, fill = "pessiglione"), stat = "identity")+
-  geom_bar(aes(1:10, mbb, fill = "mbb"), stat = "identity")+
-  geom_bar(aes(1:10, charpier, fill = "charpier"), stat = "identity")+
-  geom_bar(aes(1:10, dubois, fill = "dubois"), stat = "identity")+
-  geom_bar(aes(1:10, sanson, fill = "sanson"), stat = "identity")+
-  geom_bar(aes(1:10, wyart, fill = "wyart"), stat = "identity")+
-  geom_bar(aes(1:10, mallet, fill = "mallet"), stat = "identity")+
-  scale_x_discrete(limits=nb_hours_month$month) + labs(y = "Heures de calcul", x = "2018") + theme_bw()  
+  #geom_bar(aes(1:10, dsi, fill = "dsi"), stat = "identity")+
+  geom_bar(aes(1:10, cenir, fill = "CENIR"), stat = "identity")+
+  geom_bar(aes(1:10, vidailhet, fill = "Vidailhet - Lehéricy"), stat = "identity")+
+  geom_bar(aes(1:10, brice, fill = "Brice"), stat = "identity")+
+  geom_bar(aes(1:10, bioinfo, fill = "iCONICS"), stat = "identity")+
+  geom_bar(aes(1:10, bassem, fill = "Hassan"), stat = "identity")+
+  geom_bar(aes(1:10, aramis, fill = "Aramis"), stat = "identity")+
+  geom_bar(aes(1:10, cohen.naccache, fill = "Cohen - Bartolomeo - Naccache"), stat = "identity")+
+  geom_bar(aes(1:10, san, fill = "SAN"), stat = "identity")+
+  geom_bar(aes(1:10, pessiglione, fill = "Pessiglione - Bouret - Daunizeau"), stat = "identity")+
+  #geom_bar(aes(1:10, mbb, fill = "mbb"), stat = "identity")+
+  geom_bar(aes(1:10, charpier, fill = "Charpier - Chavez - Navarro"), stat = "identity")+
+  geom_bar(aes(1:10, dubois, fill = "Dubois - Levy"), stat = "identity")+
+  geom_bar(aes(1:10, sanson, fill = "Sanson"), stat = "identity")+
+  geom_bar(aes(1:10, wyart, fill = "Wyart"), stat = "identity")+
+  geom_bar(aes(1:10, mallet, fill = "Burguière"), stat = "identity")+
+  scale_x_discrete(limits=nb_hours_month$month) + labs(y = "Heures de calcul", x = "2018") + theme_bw()+
+  ggtitle("Utilisation mensuelle du cluster")
 
-# Without vidailhet, san and cenir
+# Without vidailhet, san, dsi and cenir
 ggplot(nb_hours_month, aes(x = "", fill = Equipes))+
-  geom_bar(aes(1:10, brice, fill = "brice"), stat = "identity")+
-  geom_bar(aes(1:10, bioinfo, fill = "iconics"), stat = "identity")+
-  geom_bar(aes(1:10, bassem, fill = "bassem"), stat = "identity")+
-  geom_bar(aes(1:10, aramis, fill = "aramis"), stat = "identity")+
-  geom_bar(aes(1:10, cohen.naccache, fill = "cohen naccache bartolemeo"), stat = "identity")+
-  geom_bar(aes(1:10, pessiglione, fill = "pessiglione"), stat = "identity")+
-  geom_bar(aes(1:10, mbb, fill = "mbb"), stat = "identity")+
-  geom_bar(aes(1:10, charpier, fill = "charpier"), stat = "identity")+
-  geom_bar(aes(1:10, dubois, fill = "dubois"), stat = "identity")+
-  geom_bar(aes(1:10, sanson, fill = "sanson"), stat = "identity")+
-  geom_bar(aes(1:10, wyart, fill = "wyart"), stat = "identity")+
-  geom_bar(aes(1:10, mallet, fill = "mallet"), stat = "identity")+
-  scale_x_discrete(limits=nb_hours_month$month) + labs(y = "Heures de calcul", x = "2018") + theme_bw()  
+  geom_bar(aes(1:10, brice, fill = "Brice"), stat = "identity")+
+  geom_bar(aes(1:10, bioinfo, fill = "iCONICS"), stat = "identity")+
+  geom_bar(aes(1:10, bassem, fill = "Hassan"), stat = "identity")+
+  geom_bar(aes(1:10, aramis, fill = "Aramis"), stat = "identity")+
+  geom_bar(aes(1:10, cohen.naccache, fill = "Cohen - Bartolomeo - Naccache"), stat = "identity")+
+  geom_bar(aes(1:10, pessiglione, fill = "Pessiglione - Bouret - Daunizeau"), stat = "identity")+
+  geom_bar(aes(1:10, charpier, fill = "Charpier - Chavez - Navarro"), stat = "identity")+
+  geom_bar(aes(1:10, dubois, fill = "Dubois - Levy"), stat = "identity")+
+  geom_bar(aes(1:10, sanson, fill = "Sanson"), stat = "identity")+
+  geom_bar(aes(1:10, wyart, fill = "Wyart"), stat = "identity")+
+  geom_bar(aes(1:10, mallet, fill = "Burguière"), stat = "identity")+
+  scale_x_discrete(limits=nb_hours_month$month) + labs(y = "Heures de calcul", x = "2018") + theme_bw()+
+  ggtitle("Utilisation mensuelle du cluster sans les équipes CENIR, Vidailhet-Lehéricy et SAN")
 
-# Plot account pie
-# blank_theme <- theme_minimal()+
-#   theme(
-#     axis.title.x = element_blank(),
-#     axis.title.y = element_blank(),
-#     panel.border = element_blank(),
-#     panel.grid=element_blank(),
-#     axis.ticks = element_blank(),
-#     plot.title=element_text(size=14, face="bold")
-#   )
-# 
-# 
-# 
-# ggplot(data = accounts_hours, aes(x = "" , y = nb_hours , fill = team))+
-#   geom_bar(width = 1 , stat = "identity")+
-#   coord_polar("y", start=0)+
-#   geom_label_repel(aes(label = prop), size=5, show.legend = F, nudge_x = 1) 
-#   
+## Plot pie team consumption 
+#pie(accounts_hours$nb_hours, accounts_hours$team)
+
+
+ggplot(data = accounts_hours, aes(x = reorder(team,nb_hours), y = nb_hours , fill = team, label = prop)) +
+  geom_bar(stat = "identity", show.legend = FALSE)+
+  geom_text() +
+  labs(y = "Heures de calcul totales - 2018", x = "Equipes")+
+  coord_flip()   
+
+ggplot(data = accounts_hours_lite, aes(x = reorder(team,nb_hours), y = nb_hours , fill = team, label = prop)) +
+  geom_bar(stat = "identity", show.legend = FALSE)+
+  geom_text() +
+  labs(y = "Heures de calcul totales - 2018", x = "Equipes")+
+  ggtitle("Consommation du cluster sans les équipes CENIR, Vidailhet-Lehéricy et SAN")+
+  coord_flip()   
+
+
+
+
