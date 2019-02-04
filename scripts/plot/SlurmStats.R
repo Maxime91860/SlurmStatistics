@@ -3,9 +3,38 @@ library(plyr)
 library(ggplot2)
 library(RColorBrewer)
 library(stringr)
+library(lubridate)
+library(scales)
+
+# functions
+elapsedToMinutes <- function(elapsed){
+  elapsed = as.character(elapsed)
+  
+  if(str_detect(elapsed, "-")){
+    elapsedDays = as.numeric(gsub("-.*", "", elapsed))
+    elapsed =  sub('.*\\-', '', elapsed)
+  }
+  else {
+    elapsedDays = 0
+  }
+  
+  elapsed = hms(elapsed)
+  
+  elapsedHours =  as.numeric(hour(elapsed))
+  elapsedMins = as.numeric(minute(elapsed))
+  elapsedSecs = as.numeric(second(elapsed))
+  
+  secElapsed = (24*3600*elapsedDays) + (3600*elapsedHours) + (60*elapsedMins) + elapsedSecs
+  minElapsed = secElapsed / 60
+  
+  #cat(sprintf("elapsedDays = %d, elapsedHours = %d , elapsedMins = %d , elapsedSecs = %d , secElapsed = %d , minElapsed = %f ",elapsedDays, elapsedHours, elapsedMins, elapsedSecs, secElapsed, minElapsed))
+  
+  return(minElapsed)
+}
+
 
 # Files generated with sacct command
-setwd("/network/lustre/iss01/home/maxime.kermarquer/statistics/data/2018/parsable/collapse")
+setwd("/home/maxime.kermarquer/Developpement/R/SlurmStatistics/data/2018/parsable/collapse")
 mars = read.table('03_mars.txt', header = TRUE, sep = "|")
 avril = read.table('04_avril.txt', header = TRUE, sep = "|")
 mai = read.table('05_mai.txt', header = TRUE, sep = "|")
@@ -54,6 +83,7 @@ year2018_months = c(mars,avril,mai,juin,juillet,aout,septembre,octobre,novembre,
 year2018 = rbind(mars,avril,mai,juin,juillet,aout,septembre,octobre,novembre,decembre)
 year2018$State = as.factor(year2018$State)
 
+users2018 = unique(data.frame(year2018$User,year2018$Account))
 
 # 
 summary(year2018)
@@ -196,19 +226,102 @@ ggplot(data_job, aes(1:10, fill = Status))+
 
 
 
+# Compute computed hours
+year2018$ElapsedMinutes = lapply(year2018$Elapsed, elapsedToMinutes)
+year2018$ElapsedMinutes = year2018$ElapsedMinutes * year2018$AllocCPUS
+
+accounts = unique(year2018$Account)
+accounts = accounts[!accounts %in% "root"]
+
+accounts_hours = matrix(0, length(accounts), 1); 
+accounts_hours = data.frame(accounts_hours)
+accounts_hours$team = accounts
 
 
-# Total jobs
-# ggplot(data.frame(total_jobs),aes(seq_along(total_jobs),total_jobs, fill = seq_along(total_jobs)))+
-#   geom_bar(stat="identity",show.legend = FALSE)+
-#   labs(y = "Jobs", x = "2018")+
-#   scale_x_discrete(limits=seq_along(total_jobs), labels=mois)+
-#   theme_bw()  
+for (i in 1:length(accounts)) {
+  # cast list to vector
+  accounts_hours$accounts_hours[i] = sum(unlist(year2018[year2018$Account == accounts[i] , ]$ElapsedMinutes)) / 60 
+  accounts_hours$team[i] = accounts[i]
+}
+
+names(accounts_hours) = c("nb_hours", "team")
+accounts_hours = accounts_hours[accounts_hours$nb_hours > 1, ]
+accounts_hours$prop  = percent(accounts_hours$nb_hours / sum(accounts_hours$nb_hours))
+
+for (i in 1:nrow(users2018)) {
+  users2018$nb_hours[i] = sum(unlist(year2018[year2018$User == users2018$year2018.User[i] , ]$ElapsedMinutes)) / 60
+}
+
+nb_hours_month = matrix(0, length(mois), length(accounts))
+colnames(nb_hours_month) = accounts
+nb_hours_month = data.frame(nb_hours_month)
+nb_hours_month$month = mois
+
+for (i in 1:length(mois)){
+  for (j in 1:length(accounts)){
+    subset = year2018[( (year2018$month == mois[i]) & (year2018$Account == accounts[j]) ) ,]$ElapsedMinutes
+    nb_hours_month[i,j] = sum(unlist(subset)) / 60
+  }
+}
 
 
-# test
-# ggplot(data.frame(total_jobs),aes(seq_along(total_jobs),total_jobs, fill = seq_along(total_jobs)))+
-#   geom_bar(stat="identity",show.legend = FALSE)+
-#   labs(y = "Jobs", x = "2018")+
-#   scale_x_discrete(limits=seq_along(total_jobs), labels=mois)+
-#   theme_bw() 
+plotMonthsHours  = ggplot(nb_hours_month, aes(x = "", fill = Equipes))
+for (j in 1:length(accounts)){
+  plotMonthsHours = plotMonthsHours + geom_bar(aes(x = "", colnames(nb_hours_month[j]), fill = accounts[j]), stat = "identity")
+}
+plotMonthsHours + scale_fill_brewer(palette = "Set1") + scale_x_discrete(limits=nb_hours_month$month) + labs(y = "Heures de calcul", x = "2018") + theme_bw()  
+
+
+ggplot(nb_hours_month, aes(x = "", fill = Equipes))+
+  geom_bar(aes(1:10, dsi, fill = "dsi"), stat = "identity")+
+  geom_bar(aes(1:10, cenir, fill = "cenir"), stat = "identity")+
+  geom_bar(aes(1:10, vidailhet, fill = "vidailhet"), stat = "identity")+
+  geom_bar(aes(1:10, brice, fill = "brice"), stat = "identity")+
+  geom_bar(aes(1:10, bioinfo, fill = "iconics"), stat = "identity")+
+  geom_bar(aes(1:10, bassem, fill = "bassem"), stat = "identity")+
+  geom_bar(aes(1:10, aramis, fill = "aramis"), stat = "identity")+
+  geom_bar(aes(1:10, cohen.naccache, fill = "cohen naccache bartolemeo"), stat = "identity")+
+  geom_bar(aes(1:10, san, fill = "san"), stat = "identity")+
+  geom_bar(aes(1:10, pessiglione, fill = "pessiglione"), stat = "identity")+
+  geom_bar(aes(1:10, mbb, fill = "mbb"), stat = "identity")+
+  geom_bar(aes(1:10, charpier, fill = "charpier"), stat = "identity")+
+  geom_bar(aes(1:10, dubois, fill = "dubois"), stat = "identity")+
+  geom_bar(aes(1:10, sanson, fill = "sanson"), stat = "identity")+
+  geom_bar(aes(1:10, wyart, fill = "wyart"), stat = "identity")+
+  geom_bar(aes(1:10, mallet, fill = "mallet"), stat = "identity")+
+  scale_x_discrete(limits=nb_hours_month$month) + labs(y = "Heures de calcul", x = "2018") + theme_bw()  
+
+# Without vidailhet, san and cenir
+ggplot(nb_hours_month, aes(x = "", fill = Equipes))+
+  geom_bar(aes(1:10, brice, fill = "brice"), stat = "identity")+
+  geom_bar(aes(1:10, bioinfo, fill = "iconics"), stat = "identity")+
+  geom_bar(aes(1:10, bassem, fill = "bassem"), stat = "identity")+
+  geom_bar(aes(1:10, aramis, fill = "aramis"), stat = "identity")+
+  geom_bar(aes(1:10, cohen.naccache, fill = "cohen naccache bartolemeo"), stat = "identity")+
+  geom_bar(aes(1:10, pessiglione, fill = "pessiglione"), stat = "identity")+
+  geom_bar(aes(1:10, mbb, fill = "mbb"), stat = "identity")+
+  geom_bar(aes(1:10, charpier, fill = "charpier"), stat = "identity")+
+  geom_bar(aes(1:10, dubois, fill = "dubois"), stat = "identity")+
+  geom_bar(aes(1:10, sanson, fill = "sanson"), stat = "identity")+
+  geom_bar(aes(1:10, wyart, fill = "wyart"), stat = "identity")+
+  geom_bar(aes(1:10, mallet, fill = "mallet"), stat = "identity")+
+  scale_x_discrete(limits=nb_hours_month$month) + labs(y = "Heures de calcul", x = "2018") + theme_bw()  
+
+# Plot account pie
+# blank_theme <- theme_minimal()+
+#   theme(
+#     axis.title.x = element_blank(),
+#     axis.title.y = element_blank(),
+#     panel.border = element_blank(),
+#     panel.grid=element_blank(),
+#     axis.ticks = element_blank(),
+#     plot.title=element_text(size=14, face="bold")
+#   )
+# 
+# 
+# 
+# ggplot(data = accounts_hours, aes(x = "" , y = nb_hours , fill = team))+
+#   geom_bar(width = 1 , stat = "identity")+
+#   coord_polar("y", start=0)+
+#   geom_label_repel(aes(label = prop), size=5, show.legend = F, nudge_x = 1) 
+#   
