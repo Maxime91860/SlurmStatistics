@@ -83,8 +83,6 @@ year2018_months = c(mars,avril,mai,juin,juillet,aout,septembre,octobre,novembre,
 year2018 = rbind(mars,avril,mai,juin,juillet,aout,septembre,octobre,novembre,decembre)
 year2018$State = as.factor(year2018$State)
 
-users2018 = unique(data.frame(year2018$User,year2018$Account))
-
 # 
 summary(year2018)
 
@@ -257,15 +255,65 @@ accounts_hours = accounts_hours[!(accounts_hours$team %in% "dsi"),]
 # compute percentage
 accounts_hours$prop  = percent(accounts_hours$nb_hours / sum(accounts_hours$nb_hours))
 
+# add proper name
+accounts_hours$proper_name = ""
+accounts_hours[accounts_hours$team %in% "cenir",]$proper_name = "CENIR"
+accounts_hours[accounts_hours$team %in% "vidailhet",]$proper_name = "Vidailhet - Lehéricy"
+accounts_hours[accounts_hours$team %in% "brice",]$proper_name = "Brice"
+accounts_hours[accounts_hours$team %in% "bioinfo",]$proper_name = "iCONICS"
+accounts_hours[accounts_hours$team %in% "bassem",]$proper_name = "Hassan"
+accounts_hours[accounts_hours$team %in% "aramis",]$proper_name = "Aramis"
+accounts_hours[accounts_hours$team %in% "cohen-naccache",]$proper_name = "Cohen - Bartolomeo - Naccache"
+accounts_hours[accounts_hours$team %in% "san",]$proper_name = "SAN"
+accounts_hours[accounts_hours$team %in% "pessiglione",]$proper_name = "Pessiglione - Bouret - Daunizeau"
+accounts_hours[accounts_hours$team %in% "charpier",]$proper_name = "Charpier - Chavez - Navarro"
+accounts_hours[accounts_hours$team %in% "dubois",]$proper_name = "Dubois - Levy"
+accounts_hours[accounts_hours$team %in% "sanson",]$proper_name = "Sanson"
+accounts_hours[accounts_hours$team %in% "wyart",]$proper_name = "Wyart"
+accounts_hours[accounts_hours$team %in% "mallet",]$proper_name = "Burguière"
+  
+
+
+  
 # without big teams
 accounts_hours_lite = accounts_hours[!(accounts_hours$team %in% "cenir"),]
 accounts_hours_lite = accounts_hours_lite[!(accounts_hours_lite$team %in% "vidailhet"),]
 accounts_hours_lite = accounts_hours_lite[!(accounts_hours_lite$team %in% "san"),]
 accounts_hours_lite$prop  = percent(accounts_hours_lite$nb_hours / sum(accounts_hours_lite$nb_hours))
 
+
+### Users
+# Compute statistics for users
+users2018 = unique(data.frame(year2018$User,year2018$Account))
+names(users2018) = c("User","Account")
+# delete dsi account and root
+users2018 = users2018[!(users2018$Account %in% "dsi"),]
+users2018 = users2018[!(users2018$Account %in% "root"),]
+# user appears two times
+users2018 = subset(users2018, !((User == "maximilien.chaumon") & (Account == "cenir")))
 for (i in 1:nrow(users2018)) {
-  users2018$nb_hours[i] = sum(unlist(year2018[year2018$User == users2018$year2018.User[i] , ]$ElapsedMinutes)) / 60
+  users2018$nb_hours[i] = sum(unlist(year2018[year2018$User == users2018$User[i] , ]$ElapsedMinutes)) / 60
 }
+# compute percentage
+users2018$prop  = percent(users2018$nb_hours / sum(users2018$nb_hours))
+users2018 = users2018[order(users2018$nb_hours , decreasing = TRUE),]
+
+users2018$proper_name = ""
+users2018[users2018$Account %in% "cenir",]$proper_name = "CENIR"
+users2018[users2018$Account %in% "vidailhet",]$proper_name = "Vidailhet - Lehéricy"
+users2018[users2018$Account %in% "brice",]$proper_name = "Brice"
+users2018[users2018$Account %in% "bioinfo",]$proper_name = "iCONICS"
+users2018[users2018$Account %in% "bassem",]$proper_name = "Hassan"
+users2018[users2018$Account %in% "aramis",]$proper_name = "Aramis"
+users2018[users2018$Account %in% "cohen-naccache",]$proper_name = "Cohen - Bartolomeo - Naccache"
+users2018[users2018$Account %in% "san",]$proper_name = "SAN"
+users2018[users2018$Account %in% "pessiglione",]$proper_name = "Pessiglione - Bouret - Daunizeau"
+users2018[users2018$Account %in% "charpier",]$proper_name = "Charpier - Chavez - Navarro"
+users2018[users2018$Account %in% "dubois",]$proper_name = "Dubois - Levy"
+users2018[users2018$Account %in% "sanson",]$proper_name = "Sanson"
+users2018[users2018$Account %in% "wyart",]$proper_name = "Wyart"
+users2018[users2018$Account %in% "mallet",]$proper_name = "Burguière"
+
 
 # Build data frame for compute hours per months per teams
 nb_hours_month = matrix(0, length(mois), length(accounts))
@@ -284,16 +332,8 @@ for (i in 1:length(mois)){
 nb_hours_month$pessiglione =  nb_hours_month$pessiglione + nb_hours_month$mbb
 nb_hours_month$mbb = NULL
 
-# doesn't work
-# plotMonthsHours  = ggplot(nb_hours_month, aes(x = "", fill = Equipes))
-# for (j in 1:length(accounts)){
-#   plotMonthsHours = plotMonthsHours + geom_bar(aes(x = "", colnames(nb_hours_month[j]), fill = accounts[j]), stat = "identity")
-# }
-# plotMonthsHours + scale_fill_brewer(palette = "Set1") + scale_x_discrete(limits=nb_hours_month$month) + labs(y = "Heures de calcul", x = "2018") + theme_bw()  
-
-# without dsi
+# plot monthly consumption
 ggplot(nb_hours_month, aes(x = "", fill = Equipes))+
-  #geom_bar(aes(1:10, dsi, fill = "dsi"), stat = "identity")+
   geom_bar(aes(1:10, cenir, fill = "CENIR"), stat = "identity")+
   geom_bar(aes(1:10, vidailhet, fill = "Vidailhet - Lehéricy"), stat = "identity")+
   geom_bar(aes(1:10, brice, fill = "Brice"), stat = "identity")+
@@ -303,7 +343,6 @@ ggplot(nb_hours_month, aes(x = "", fill = Equipes))+
   geom_bar(aes(1:10, cohen.naccache, fill = "Cohen - Bartolomeo - Naccache"), stat = "identity")+
   geom_bar(aes(1:10, san, fill = "SAN"), stat = "identity")+
   geom_bar(aes(1:10, pessiglione, fill = "Pessiglione - Bouret - Daunizeau"), stat = "identity")+
-  #geom_bar(aes(1:10, mbb, fill = "mbb"), stat = "identity")+
   geom_bar(aes(1:10, charpier, fill = "Charpier - Chavez - Navarro"), stat = "identity")+
   geom_bar(aes(1:10, dubois, fill = "Dubois - Levy"), stat = "identity")+
   geom_bar(aes(1:10, sanson, fill = "Sanson"), stat = "identity")+
@@ -330,21 +369,27 @@ ggplot(nb_hours_month, aes(x = "", fill = Equipes))+
 
 ## Plot pie team consumption 
 #pie(accounts_hours$nb_hours, accounts_hours$team)
-
-
 ggplot(data = accounts_hours, aes(x = reorder(team,nb_hours), y = nb_hours , fill = team, label = prop)) +
   geom_bar(stat = "identity", show.legend = FALSE)+
   geom_text() +
+  scale_x_discrete(labels=accounts_hours$proper_name)+
   labs(y = "Heures de calcul totales - 2018", x = "Equipes")+
   coord_flip()   
 
 ggplot(data = accounts_hours_lite, aes(x = reorder(team,nb_hours), y = nb_hours , fill = team, label = prop)) +
   geom_bar(stat = "identity", show.legend = FALSE)+
   geom_text() +
+  scale_x_discrete(labels=accounts_hours_lite$proper_name)+
   labs(y = "Heures de calcul totales - 2018", x = "Equipes")+
   ggtitle("Consommation du cluster sans les équipes CENIR, Vidailhet-Lehéricy et SAN")+
   coord_flip()   
 
 
-
+## Users consumption
+ggplot(data = users2018[1:10,], aes(x = reorder(User,nb_hours), y = nb_hours , fill = proper_name, label = prop)) +
+  geom_bar(stat = "identity")+
+  geom_text() +
+  labs(y = "Heures de calcul totales - 2018", x = "Utilisateurs")+
+  coord_flip()+
+  ggtitle("Top 10 - Utilisateurs")
 
