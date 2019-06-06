@@ -219,7 +219,7 @@ ggplot(data_job, aes(1:10, fill = Status))+
   geom_bar(aes(1:10, TIMEOUT, fill = "TIMEOUT"), stat = "identity")+
   scale_fill_brewer(palette = "Set1")+
   scale_x_discrete(limits=data_job$MONTH)+
-  labs(y = "Job count", x = "2018")+
+  labs(y = "Nombres de jobs soumis", x = "2018")+
   theme_bw()  
 
 
@@ -298,21 +298,21 @@ for (i in 1:nrow(users2018)) {
 users2018$prop  = percent(users2018$nb_hours / sum(users2018$nb_hours))
 users2018 = users2018[order(users2018$nb_hours , decreasing = TRUE),]
 
-users2018$proper_name = ""
-users2018[users2018$Account %in% "cenir",]$proper_name = "CENIR"
-users2018[users2018$Account %in% "vidailhet",]$proper_name = "Vidailhet - Lehéricy"
-users2018[users2018$Account %in% "brice",]$proper_name = "Brice"
-users2018[users2018$Account %in% "bioinfo",]$proper_name = "iCONICS"
-users2018[users2018$Account %in% "bassem",]$proper_name = "Hassan"
-users2018[users2018$Account %in% "aramis",]$proper_name = "Aramis"
-users2018[users2018$Account %in% "cohen-naccache",]$proper_name = "Cohen - Bartolomeo - Naccache"
-users2018[users2018$Account %in% "san",]$proper_name = "SAN"
-users2018[users2018$Account %in% "pessiglione",]$proper_name = "Pessiglione - Bouret - Daunizeau"
-users2018[users2018$Account %in% "charpier",]$proper_name = "Charpier - Chavez - Navarro"
-users2018[users2018$Account %in% "dubois",]$proper_name = "Dubois - Levy"
-users2018[users2018$Account %in% "sanson",]$proper_name = "Sanson"
-users2018[users2018$Account %in% "wyart",]$proper_name = "Wyart"
-users2018[users2018$Account %in% "mallet",]$proper_name = "Burguière"
+users2018$Equipe = ""
+users2018[users2018$Account %in% "cenir",]$Equipe = "CENIR"
+users2018[users2018$Account %in% "vidailhet",]$Equipe = "Vidailhet - Lehéricy"
+users2018[users2018$Account %in% "brice",]$Equipe = "Brice"
+users2018[users2018$Account %in% "bioinfo",]$Equipe = "iCONICS"
+users2018[users2018$Account %in% "bassem",]$Equipe = "Hassan"
+users2018[users2018$Account %in% "aramis",]$Equipe = "Aramis"
+users2018[users2018$Account %in% "cohen-naccache",]$Equipe = "Cohen - Bartolomeo - Naccache"
+users2018[users2018$Account %in% "san",]$Equipe = "SAN"
+users2018[users2018$Account %in% "pessiglione",]$Equipe = "Pessiglione - Bouret - Daunizeau"
+users2018[users2018$Account %in% "charpier",]$Equipe = "Charpier - Chavez - Navarro"
+users2018[users2018$Account %in% "dubois",]$Equipe = "Dubois - Levy"
+users2018[users2018$Account %in% "sanson",]$Equipe = "Sanson"
+users2018[users2018$Account %in% "wyart",]$Equipe = "Wyart"
+users2018[users2018$Account %in% "mallet",]$Equipe = "Burguière"
 
 
 # Build data frame for compute hours per months per teams
@@ -386,7 +386,7 @@ ggplot(data = accounts_hours_lite, aes(x = reorder(team,nb_hours), y = nb_hours 
 
 
 ## Users consumption
-ggplot(data = users2018[1:10,], aes(x = reorder(User,nb_hours), y = nb_hours , fill = proper_name, label = prop)) +
+ggplot(data = users2018[1:10,], aes(x = reorder(User,nb_hours), y = nb_hours , fill = Equipe, label = prop)) +
   geom_bar(stat = "identity")+
   geom_text() +
   labs(y = "Heures de calcul totales - 2018", x = "Utilisateurs")+
